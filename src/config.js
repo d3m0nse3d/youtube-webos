@@ -1,5 +1,15 @@
 const CONFIG_KEY = 'ytaf-configuration';
 
+// --- Доступные действия для цветных кнопок ---
+export const shortcutActions = {
+  none: 'None',
+  refresh_page: 'Refresh Page',
+  oled_toggle: 'Toggle OLED',
+  config_menu: 'Open Config Menu',
+  sb_manual_skip: 'SponsorBlock Skip',
+  // можно добавить другие действия по мере необходимости
+};
+
 const configOptions = new Map([
   ['enableAdBlock', { default: true, desc: 'Enable ad blocking' }],
   ['upgradeThumbnails', { default: false, desc: 'Upgrade thumbnail quality' }],
@@ -75,6 +85,35 @@ const configOptions = new Map([
     {
       default: false,
       desc: 'Bypass initial account selection on startup'
+    }
+  ],
+  // ----- НАСТРОЙКИ ДЛЯ ЦВЕТНЫХ КНОПОК -----
+  [
+    'shortcut_key_red',
+    {
+      default: 'oled_toggle',
+      desc: 'Red button action'
+    }
+  ],
+  [
+    'shortcut_key_green',
+    {
+      default: 'config_menu',
+      desc: 'Green button action'
+    }
+  ],
+  [
+    'shortcut_key_yellow',
+    {
+      default: 'none',
+      desc: 'Yellow button action'
+    }
+  ],
+  [
+    'shortcut_key_blue',
+    {
+      default: 'refresh_page',   // ← Синяя кнопка по умолчанию → перезагрузка
+      desc: 'Blue button action'
     }
   ]
 ]);
