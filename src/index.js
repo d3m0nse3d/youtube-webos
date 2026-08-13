@@ -1,85 +1,86 @@
-// -------- ОБРАБОТЧИКИ КНОПОК --------
-const BLUE_KEY_CODES = [406, 167, 191];
+import { extractLaunchParams, handleLaunch } from './utils';
+import { configRead, configAddChangeListener } from './config.js';
 
-function isBlueButton(event) {
-  return BLUE_KEY_CODES.includes(event.charCode) || BLUE_KEY_CODES.includes(event.keyCode);
+/**
+ * Сопоставление кодов клавиш с названиями кнопок.
+ * Используется для определения, какая кнопка была нажата.
+ */
+const KEY_MAP = {
+  403: 'red',
+  404: 'green',
+  172: 'green',
+  405: 'yellow',
+  170: 'yellow',
+  406: 'blue',
+  167: 'blue',
+  191: 'blue',
+};
+
+/**
+ * Возвращает название цветной кнопки по её коду.
+ * @param {number} keyCode Код клавиши
+ * @returns {string | null} Название кнопки или null
+ */
+function getKeyColor(keyCode) {
+  return KEY_MAP[keyCode] || null;
 }
 
-// Перезагрузка iframe или всей страницы
-function reloadIframe() {
-  const iframe = document.getElementById('youtube-tv-iframe');
-  if (iframe) {
-    try {
-      iframe.contentWindow.location.reload();
-      console.log('[YTAF] Iframe перезагружен');
-    } catch (e) {
-      console.warn('[YTAF] Не удалось перезагрузить iframe, перезагружаем страницу', e);
+/**
+ * Выполняет действие, назначенное на кнопку.
+ * @param {string} action Название действия
+ */
+function executeAction(action) {
+  switch (action) {
+    case 'refresh_page':
+      console.log('[YTAF] Перезагрузка страницы');
       window.location.reload();
-    }
-  } else {
-    window.location.reload();
+      break;
+    // Здесь можно добавить другие действия, если они понадобятся
+    default:
+      console.log('[YTAF] Неизвестное действие:', action);
   }
 }
 
-// Обработчик синей кнопки
-function blueButtonHandler(event) {
-  if (isBlueButton(event)) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (event.type === 'keydown') {
-      reloadIframe();
-    }
-    return false;
+/**
+ * Основной обработчик нажатий клавиш.
+ * Проверяет, является ли нажатая клавиша цветной кнопкой,
+ * и выполняет соответствующее действие из конфига.
+ */
+function keyHandler(event) {
+  const color = getKeyColor(event.keyCode);
+  if (!color) return; // Не цветная кнопка — игнорируем
+
+  const action = configRead(`shortcut_key_${color}`);
+  if (!action || action === 'none') return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  if (event.type === 'keydown') {
+    executeAction(action);
   }
-  return true;
 }
 
-// Регистрация на всех фазах (захват и всплытие)
-window.addEventListener('keydown', blueButtonHandler, true);
-window.addEventListener('keypress', blueButtonHandler, true);
-window.addEventListener('keyup', blueButtonHandler, true);
-window.addEventListener('keydown', blueButtonHandler, false);
-window.addEventListener('keypress', blueButtonHandler, false);
-window.addEventListener('keyup', blueButtonHandler, false);
+// --- Инициализация ---
 
-// Кнопка "1" – перезагрузка всей страницы (резерв)
-window.addEventListener('keydown', (event) => {
-  if (event.keyCode === 49 || event.key === '1') {
-    window.location.reload();
-    event.preventDefault();
-  }
-});
+function main() {
+  // Запускаем основное приложение YouTube
+  handleLaunch(extractLaunchParams());
 
-console.log('[YTAF] Обработчики синей кнопки и "1" зарегистрированы.');
+  // Регистрируем глобальный обработчик для цветных кнопок
+  window.addEventListener('keydown', keyHandler, true);
+  window.addEventListener('keypress', keyHandler, true);
+  window.addEventListener('keyup', keyHandler, true);
 
-// -------- СОЗДАНИЕ IFRAME С YOUTUBE TV --------
-function createYouTubeTV() {
-  // Очищаем body и устанавливаем iframe на весь экран
-  document.body.innerHTML = '';
-  document.body.style.margin = '0';
-  document.body.style.padding = '0';
-  document.body.style.overflow = 'hidden';
-  document.body.style.background = '#000';
+  // Подписываемся на изменения конфига, чтобы обработчик всегда
+  // использовал актуальные настройки (опционально)
+  ['red', 'green', 'blue'].forEach((color) => {
+    configAddChangeListener(`shortcut_key_${color}`, () => {
+      console.log(`[YTAF] Действие для кнопки ${color} обновлено`);
+    });
+  });
 
-  const iframe = document.createElement('iframe');
-  iframe.id = 'youtube-tv-iframe';
-  iframe.src = 'https://www.youtube.com/tv';
-  iframe.style.position = 'absolute';
-  iframe.style.top = '0';
-  iframe.style.left = '0';
-  iframe.style.width = '100%';
-  iframe.style.height = '100%';
-  iframe.style.border = 'none';
-  iframe.allow = 'fullscreen; autoplay; encrypted-media;';
-  iframe.setAttribute('allowfullscreen', 'true');
-
-  document.body.appendChild(iframe);
-  console.log('[YTAF] YouTube TV загружен в iframe');
+  console.log('[YTAF] Приложение запущено. Синяя кнопка: перезагрузка страницы');
 }
 
-// Запускаем создание iframe после загрузки DOM
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', createYouTubeTV);
-} else {
-  createYouTubeTV();
-}
+main();
