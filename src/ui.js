@@ -210,8 +210,11 @@ const eventHandler = (evt) => {
     evt.stopPropagation();
 
     if (evt.type === 'keydown') {
-      // Reload page on blue button press
-      window.location.reload();
+      // Перезагрузка страницы с уведомлением
+      showNotification('Перезагрузка...', 1500, 'blue');
+      setTimeout(() => {
+        window.location.href = window.location.href; // или replace
+      }, 100);
     }
     return false;
   }
