@@ -206,13 +206,13 @@ const eventHandler = (evt) => {
       showOptionsPanel(!optionsPanelVisible);
     }
     return false;
-  } else if (getKeyColor(evt.charCode) === '') {
+  } else if (getKeyColor(evt.charCode) === 'blue') {
     evt.preventDefault();
     evt.stopPropagation();
 
     if (evt.type === 'keydown') {
-      // Toggle Audio-Only mode.
-      windows.location.reload();
+      // Reload page on blue button press
+      window.location.reload();
     }
     return false;
   }
@@ -307,70 +307,6 @@ function applyUIFixes() {
   } catch (e) {
     console.error('error setting up <body> class observer:', e);
   }
-}
-
-let audioOnlyEnabled = false;
-let overlayObserver = null;
-
-async function initAudioOnlyToggle() {
-  const elVideo = await requireElement('video', HTMLVideoElement);
-
-  audioOnlyEnabled = !audioOnlyEnabled;
-  elVideo.style.visibility = audioOnlyEnabled ? 'hidden' : '';
-
-  const AUDIO_OVERLAY_SELECTOR = '.ytLrAudioPlayerOverlayAudioMode';
-  const YTAF_OVERLAY_CLASS = 'ytaf-ui-watchControl-overlayMessage';
-
-  const applyAudioOverlayFilter = () => {
-    const node = document.querySelector(AUDIO_OVERLAY_SELECTOR);
-    if (!node) return;
-    if (audioOnlyEnabled) {
-      node.style.setProperty('filter', 'brightness(0)', 'important');
-    } else {
-      node.style.removeProperty('filter');
-    }
-  };
-  applyAudioOverlayFilter();
-
-  showNotification(
-    `Audio-Only mode: ${audioOnlyEnabled ? 'Enabled' : 'Disabled'}`,
-    2000,
-    'blue'
-  );
-
-  const controlsContainer = await requireElement(
-    '[idomkey="controls"]',
-    HTMLElement
-  );
-
-  const updateOverlay = (root = controlsContainer) => {
-    let overlay = root.querySelector(`.${YTAF_OVERLAY_CLASS}`);
-
-    if (!audioOnlyEnabled) {
-      overlay?.remove();
-      return;
-    }
-
-    if (overlay) return;
-
-    overlay = Object.assign(document.createElement('div'), {
-      textContent: 'Audio-Only Mode Enabled - Press [BLUE] to toggle',
-      className: YTAF_OVERLAY_CLASS
-    });
-    root.prepend(overlay);
-  };
-  updateOverlay();
-
-  if (overlayObserver) overlayObserver.disconnect();
-  overlayObserver = new MutationObserver(() => {
-    updateOverlay();
-    applyAudioOverlayFilter();
-  });
-
-  overlayObserver.observe(controlsContainer, {
-    childList: true,
-    subtree: true
-  });
 }
 
 applyUIFixes();
