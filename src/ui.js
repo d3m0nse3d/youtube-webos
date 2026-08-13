@@ -206,13 +206,13 @@ const eventHandler = (evt) => {
       showOptionsPanel(!optionsPanelVisible);
     }
     return false;
-  } else if (getKeyColor(evt.charCode) === 'blue') {
+  } else if (getKeyColor(evt.charCode) === '') {
     evt.preventDefault();
     evt.stopPropagation();
 
     if (evt.type === 'keydown') {
       // Toggle Audio-Only mode.
-      initAudioOnlyToggle();
+      windows.location.reload();
     }
     return false;
   }
