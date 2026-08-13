@@ -213,7 +213,7 @@ const eventHandler = (evt) => {
       // Перезагрузка страницы с уведомлением
       showNotification('Перезагрузка...', 1500, 'blue');
       setTimeout(() => {
-        window.location.href = window.location.href; // или replace
+        window.location.replace(window.location.href);
       }, 100);
     }
     return false;
