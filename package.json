@@ -16,7 +16,7 @@
     "test:compat": "es-check",
     "lint:eslint": "eslint --concurrency auto",
     "lint:tsc": "tsc -b",
-    "lint:prettier": "prettier --check .",
+    "lint:prettier": "prettier --write .",
     "lint:all": "pnpm run \"/^lint:(?!all)/\"",
     "format": "prettier --write ."
   },
