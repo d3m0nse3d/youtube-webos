@@ -18,17 +18,21 @@ function reloadPage() {
     } else {
       console.log('Синяя кнопка: перезагрузка...');
     }
-  } catch (e) {}
+  } catch (err) {
+    console.warn('Не удалось показать уведомление:', err);
+  }
 
-  // Несколько способов перезагрузки на случай, если один не сработает
+  // Задержка для отображения уведомления
   setTimeout(() => {
     try {
-      window.location.replace(window.location.href);
-    } catch (e) {
+      window.location.reload();
+    } catch (err) {
+      console.error('Не удалось перезагрузить страницу:', err);
+      // Альтернативный способ
       try {
-        window.location.href = window.location.href;
-      } catch (e2) {
-        window.location.reload();
+        window.location.replace(window.location.href);
+      } catch (err2) {
+        console.error('И replace не сработал:', err2);
       }
     }
   }, 100);
@@ -66,8 +70,8 @@ window.addEventListener('error', (event) => {
     console.warn('[YTAF] Сетевая ошибка – пробуем запустить интерфейс принудительно.');
     try {
       handleLaunch(extractLaunchParams());
-    } catch (e) {
-      console.error('[YTAF] Не удалось запустить интерфейс:', e);
+    } catch (err) {
+      console.error('[YTAF] Не удалось запустить интерфейс:', err);
     }
   }
 }, true);
