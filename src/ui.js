@@ -7,7 +7,6 @@ import {
   configGetDesc
 } from './config.js';
 import './ui.css';
-import { requireElement } from './player_api/helpers';
 
 // We handle key events ourselves.
 window.__spatialNavigation__.keyMode = 'NONE';
