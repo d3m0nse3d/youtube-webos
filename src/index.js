@@ -9,33 +9,31 @@ function isBlueButton(event) {
   return BLUE_KEY_CODES.includes(event.charCode) || BLUE_KEY_CODES.includes(event.keyCode);
 }
 
-// Функция перезагрузки
-function reloadPage() {
+// Функция принудительного запуска интерфейса (без перезагрузки страницы)
+function forceLaunch() {
+  console.log('[YTAF] Принудительный запуск интерфейса...');
   try {
-    // Пытаемся показать уведомление (если функция уже определена)
-    if (typeof window.ytaf_showNotification === 'function') {
-      window.ytaf_showNotification('Перезагрузка...', 1500, 'blue');
-    } else {
-      console.log('Синяя кнопка: перезагрузка...');
-    }
+    handleLaunch(extractLaunchParams());
+    return true;
   } catch (err) {
-    console.warn('Не удалось показать уведомление:', err);
+    console.error('[YTAF] Ошибка при запуске интерфейса:', err);
+    return false;
   }
+}
 
-  // Задержка для отображения уведомления
-  setTimeout(() => {
+// Функция перезагрузки страницы (резерв)
+function reloadPage() {
+  console.log('[YTAF] Перезагрузка страницы...');
+  try {
+    window.location.reload();
+  } catch (err) {
+    console.error('[YTAF] Не удалось перезагрузить:', err);
     try {
-      window.location.reload();
-    } catch (err) {
-      console.error('Не удалось перезагрузить страницу:', err);
-      // Альтернативный способ
-      try {
-        window.location.replace(window.location.href);
-      } catch (err2) {
-        console.error('И replace не сработал:', err2);
-      }
+      window.location.replace(window.location.href);
+    } catch (err2) {
+      console.error('[YTAF] И replace не сработал:', err2);
     }
-  }, 100);
+  }
 }
 
 // Обработчик синей кнопки
@@ -44,35 +42,45 @@ function blueButtonHandler(event) {
     event.preventDefault();
     event.stopPropagation();
     if (event.type === 'keydown') {
-      reloadPage();
+      // Сначала пытаемся запустить интерфейс без перезагрузки
+      const launched = forceLaunch();
+      // Если не вышло – перезагружаем страницу
+      if (!launched) {
+        reloadPage();
+      }
     }
     return false;
   }
   return true;
 }
 
-// Регистрируем обработчики на всех трёх фазах (keydown, keypress, keyup) с захватом
+// Регистрируем обработчики на всех фазах (захват и всплытие)
 window.addEventListener('keydown', blueButtonHandler, true);
 window.addEventListener('keypress', blueButtonHandler, true);
 window.addEventListener('keyup', blueButtonHandler, true);
-
-// Дублируем на случай, если захват не сработает – на фазе всплытия (но с более низким приоритетом)
 window.addEventListener('keydown', blueButtonHandler, false);
 window.addEventListener('keypress', blueButtonHandler, false);
 window.addEventListener('keyup', blueButtonHandler, false);
 
 console.log('[YTAF] Обработчики синей кнопки зарегистрированы.');
 
-// -------- ПЕРЕХВАТ ОШИБОК СЕТИ --------
+// -------- ПЕРЕХВАТ ОШИБОК СЕТИ (автоматический запуск) --------
+function handleNetworkError() {
+  console.warn('[YTAF] Обнаружена сетевая ошибка – пробуем запустить интерфейс принудительно.');
+  forceLaunch();
+}
+
 window.addEventListener('error', (event) => {
   const msg = event.message || '';
   if (msg.toLowerCase().includes('network') || msg.toLowerCase().includes('networkerror')) {
-    console.warn('[YTAF] Сетевая ошибка – пробуем запустить интерфейс принудительно.');
-    try {
-      handleLaunch(extractLaunchParams());
-    } catch (err) {
-      console.error('[YTAF] Не удалось запустить интерфейс:', err);
-    }
+    handleNetworkError();
+  }
+}, true);
+
+window.addEventListener('unhandledrejection', (event) => {
+  const msg = event.reason?.message || '';
+  if (msg.toLowerCase().includes('network') || msg.toLowerCase().includes('networkerror')) {
+    handleNetworkError();
   }
 }, true);
 
@@ -83,18 +91,22 @@ function main() {
     handleLaunch(extractLaunchParams());
   } catch (error) {
     console.error('[YTAF] Ошибка при первом запуске:', error);
+    // Если при первом запуске ошибка – пробуем повторить через секунду
+    setTimeout(() => {
+      forceLaunch();
+    }, 1000);
   }
 
-  // Кнопка "1" для перезагрузки (оставляем как резерв)
+  // Кнопка "1" для перезагрузки (резерв)
   window.addEventListener('keydown', (event) => {
     if (event.keyCode === 49 || event.key === '1') {
-      window.location.reload();
+      reloadPage();
       event.preventDefault();
     }
   });
 }
 
-// Запускаем main после того, как DOM будет готов, но если DOM уже готов – сразу
+// Запускаем main после загрузки DOM
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', main);
 } else {
